@@ -68,7 +68,6 @@ class CompetitiveGUI:
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         self.clock = pygame.time.Clock()
 
-        # Phong chu da nen tang
         self.font_main = get_system_font(18, bold=True)
         self.font_sub = get_system_font(14)
         self.font_title = get_system_font(20, bold=True)
@@ -95,17 +94,14 @@ class CompetitiveGUI:
             winner = self.competition.get_winner(cur_state)
             status_txt = "HOA NHAU!" if winner is None else f"AGENT {winner} CHIEN THANG!"
 
-        # Dong 1: So luot va trang thai hoat dong
         turn_str = f"Luot: {cur_state.turn} / {self.limit_steps} | [{status_txt}]"
         self.screen.blit(self.font_title.render(turn_str, True, COLOR_TEXT), (20, 10))
 
-        # Dong 2: Ti so hai ben
         txt_p0 = self.font_main.render(f"Agent 0 (A): {score_0} diem", True, COLOR_AGENT_0)
         txt_p1 = self.font_main.render(f"Agent 1 (Z): {score_1} diem", True, COLOR_AGENT_1)
         self.screen.blit(txt_p0, (20, 42))
         self.screen.blit(txt_p1, (self.screen_width - 240, 42))
 
-        # Dong 3: Nuoc di gan nhat va thoi gian phan hoi
         if self.current_idx > 0 and self.current_idx - 1 < len(self.history_actions):
             a0, a1 = self.history_actions[self.current_idx - 1]
             t0, t1 = self.history_timings[self.current_idx - 1]
@@ -114,7 +110,6 @@ class CompetitiveGUI:
             detail_str = "Trang thai xuat phat tran dau"
         self.screen.blit(self.font_sub.render(detail_str, True, COLOR_TEXT_MUTED), (20, 72))
 
-        # Dong 4: Huong dan phim bam
         guide_str = "Phim: [Space] Pause/Play | [->] Tien | [<-] Lui | [R] Reset | [Esc] Thoat"
         self.screen.blit(self.font_sub.render(guide_str, True, (180, 185, 195)), (20, 98))
 
@@ -132,17 +127,14 @@ class CompetitiveGUI:
                 py = offset_y + y * self.cell_size
                 rect = pygame.Rect(px, py, self.cell_size, self.cell_size)
 
-                # Ve tuong
                 if pos in self.board.walls:
                     draw_wall(self.screen, rect)
                     continue
 
-                # Ve san va dich
                 if pos in self.board.floors:
                     is_goal = pos in self.board.goals
                     draw_floor(self.screen, rect, is_goal=is_goal)
 
-                    # Ve hop va to mau theo chu so huu (0: xanh, 1: do, None: vang)
                     if pos in boxes_dict:
                         owner = boxes_dict[pos]
                         if owner == 0:
@@ -153,13 +145,11 @@ class CompetitiveGUI:
                             box_color = COLOR_BOX_NEUTRAL
                         draw_box(self.screen, rect, box_color)
 
-                    # Ve Agent 0 (A)
                     if pos == cur_state.players[0]:
                         center = rect.center
                         radius = self.cell_size // 3
                         draw_agent(self.screen, center, radius, COLOR_AGENT_0, "0", self.font_sub)
 
-                    # Ve Agent 1 (Z)
                     if pos == cur_state.players[1]:
                         center = rect.center
                         radius = self.cell_size // 3

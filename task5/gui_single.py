@@ -3,7 +3,6 @@ import sys
 import pygame
 from typing import List, Optional
 
-# Dam bao import duoc core va task2 du chay tu thu muc goc hay tu task5/
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
 if PROJECT_ROOT not in sys.path:
@@ -20,7 +19,6 @@ from task2.solver import SearchSolver, SearchResult
 
 
 def resolve_map_path(map_name_or_path: str) -> str:
-    # Tim file ban do theo ca duong dan tuong doi va thu muc maps/
     candidates = [
         map_name_or_path,
         os.path.join(PROJECT_ROOT, map_name_or_path),
@@ -49,7 +47,6 @@ class SinglePlayerGUI:
         if self.algorithm not in ("ucs", "astar"):
             self.algorithm = "astar"
 
-        # Tinh toan kich thuoc cua so
         self.cell_size = 48
         self.hud_height = 130
         self.grid_width = self.board.width * self.cell_size
@@ -60,12 +57,10 @@ class SinglePlayerGUI:
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         self.clock = pygame.time.Clock()
 
-        # Khoi tao phong chu da nen tang
         self.font_main = get_system_font(18, bold=True)
         self.font_sub = get_system_font(14)
         self.font_title = get_system_font(20, bold=True)
 
-        # Trang thai giai va dieu khien
         self.solution_res: Optional[SearchResult] = None
         self.history_states: List[State] = [self.board.initial]
         self.actions_list: List[str] = []
@@ -75,11 +70,9 @@ class SinglePlayerGUI:
         self.step_delay_ms = 400
         self.last_step_time = pygame.time.get_ticks()
 
-        # Giai tim duong ban dau
         self._solve()
 
     def _solve(self):
-        # Chay thuat toan duoc chon (UCS hoac A*)
         solver = SearchSolver(self.board, algorithm=self.algorithm, prune_deadlocks=True)
         self.solution_res = solver.solve(timeout=30.0)
 
@@ -121,7 +114,6 @@ class SinglePlayerGUI:
         is_at_goal = self.board.is_goal(cur_state)
         goal_status = "HOAN THANH GOAL" if is_at_goal else "DANG DI CHUYEN"
 
-        # Dong 1: Thuat toan va trang thai chay
         title_surf = self.font_title.render(f"Thuat toan: {algo_name}", True, COLOR_ACCENT)
         self.screen.blit(title_surf, (20, 10))
 
@@ -129,7 +121,6 @@ class SinglePlayerGUI:
         mode_surf = self.font_main.render(f"[{status_txt}] - {goal_status}", True, state_color)
         self.screen.blit(mode_surf, (self.screen_width - 270, 12))
 
-        # Dong 2: So hanh dong / cost va thong so tim kiem
         total_actions = len(self.actions_list)
         time_ms = self.solution_res.elapsed_seconds * 1000 if self.solution_res else 0.0
         expanded = self.solution_res.expanded if self.solution_res else 0
@@ -139,7 +130,6 @@ class SinglePlayerGUI:
         self.screen.blit(self.font_main.render(info_1, True, COLOR_TEXT), (20, 42))
         self.screen.blit(self.font_sub.render(info_2, True, COLOR_TEXT_MUTED), (20, 70))
 
-        # Dong 3: Huong dan phim bam
         controls_text = "Phim: [Space] Pause/Play | [->] Tien | [<-] Lui | [1]/[U] UCS | [2]/[A] A* | [R] Reset"
         self.screen.blit(self.font_sub.render(controls_text, True, (180, 185, 195)), (20, 98))
 
@@ -157,22 +147,18 @@ class SinglePlayerGUI:
                 py = offset_y + y * self.cell_size
                 rect = pygame.Rect(px, py, self.cell_size, self.cell_size)
 
-                # Ve tuong
                 if pos in self.board.walls:
                     draw_wall(self.screen, rect)
                     continue
 
-                # Ve san va diem dich
                 if pos in self.board.floors:
                     is_goal = pos in self.board.goals
                     draw_floor(self.screen, rect, is_goal=is_goal)
 
-                    # Ve hop: doi mau neu da vao diem dich
                     if pos in boxes_set:
                         box_color = COLOR_BOX_GOAL if is_goal else COLOR_BOX_NEUTRAL
                         draw_box(self.screen, rect, box_color)
 
-                    # Ve Agent 1 nguoi
                     if pos == cur_state.player:
                         center = rect.center
                         radius = self.cell_size // 3
