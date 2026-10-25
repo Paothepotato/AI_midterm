@@ -36,7 +36,7 @@ def resolve_map_path(map_name_or_path: str) -> str:
 class SinglePlayerGUI:
     """Giao dien do hoa Pygame cho tro choi Sokoban che do mot nguoi."""
 
-    def __init__(self, map_path: str = "maps/example_simple.txt", default_algo: str = "astar"):
+    def __init__(self, map_path: str = "maps/map_easy.txt", default_algo: str = "astar"):
         pygame.init()
         pygame.display.set_caption("Sokoban AI - Single Player (UCS & A*)")
 
@@ -219,7 +219,7 @@ class SinglePlayerGUI:
 
 
 if __name__ == "__main__":
-    map_target = "maps/example_simple.txt"
+    map_target = "maps/example_map.txt"
     algo_target = "astar"
 
     if len(sys.argv) > 1:

@@ -59,6 +59,6 @@ def test_map_solving(map_path: str, timeout: float = 30.0):
 
 
 if __name__ == "__main__":
-    test_map_solving("maps/example_simple.txt")
-
     test_map_solving("maps/map_easy.txt")
+
+    test_map_solving("maps/map_medium.txt")

@@ -74,9 +74,9 @@ Mở terminal tại thư mục gốc của dự án để thực thi các task c
 * **Chạy Task 5 (Giao diện đồ họa đơn người):**
 
   ```
-  python task5/gui_single.py maps/example_simple.txt astar
+  python task5/gui_single.py maps/example_map.txt astar
   # Hoặc sử dụng UCS:
-  python task5/gui_single.py maps/example_simple.txt ucs
+  python task5/gui_single.py maps/example_map.txt ucs
   
   ```
 

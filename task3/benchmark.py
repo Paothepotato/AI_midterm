@@ -13,7 +13,10 @@ if sys.platform == "win32":
         pass
 
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,8 +25,22 @@ from core.board import Board
 from task2.solver import SearchSolver
 
 
+def resolve_map_path(file_path: str) -> str:
+    candidates = [
+        file_path,
+        os.path.join(PROJECT_ROOT, file_path),
+        os.path.join(CURRENT_DIR, "..", file_path),
+        os.path.join(PROJECT_ROOT, "maps", os.path.basename(file_path)),
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return os.path.abspath(c)
+    return file_path
+
+
 def run_single_experiment(map_path: str, algorithm: str, timeout: float = 30.0) -> Dict[str, Any]:
-    board = Board.from_file(map_path)
+    actual_path = resolve_map_path(map_path)
+    board = Board.from_file(actual_path)
     solver = SearchSolver(board, algorithm=algorithm, prune_deadlocks=True)
 
     tracemalloc.start()
@@ -47,12 +64,9 @@ def run_single_experiment(map_path: str, algorithm: str, timeout: float = 30.0) 
 
 def run_full_benchmark():
     test_cases = [
-        {"name": "Simple (1 Box)", "file": "maps/example_simple.txt", "boxes": 1},
-        {"name": "Small 2 (2 Boxes)", "file": "maps/map_small_3.txt", "boxes": 2},
         {"name": "Small Easy (2 Boxes)", "file": "maps/map_easy.txt", "boxes": 2},
-        {"name": "Medium 1 (3 Boxes)", "file": "maps/map_medium_1.txt", "boxes": 3},
-        {"name": "Medium Obstacle (3 Boxes)", "file": "maps/map_medium_2.txt", "boxes": 3},
-        {"name": "Large (4 Boxes)", "file": "maps/map_large_1.txt", "boxes": 4},
+        {"name": "Medium (3 Boxes)", "file": "maps/map_medium.txt", "boxes": 3},
+        {"name": "Complex (7 Boxes)", "file": "maps/example_map.txt", "boxes": 7},
     ]
 
     print("=" * 90)
@@ -130,7 +144,7 @@ def print_markdown_table(results: List[Dict[str, Any]]):
 
 
 def generate_benchmark_plots(results: List[Dict[str, Any]]):
-    plots_dir = os.path.join(os.path.dirname(__file__), "plots")
+    plots_dir = os.path.join(CURRENT_DIR, "plots")
     os.makedirs(plots_dir, exist_ok=True)
 
     labels = [r["name"] for r in results]
@@ -146,46 +160,81 @@ def generate_benchmark_plots(results: List[Dict[str, Any]]):
     x = np.arange(len(labels))
     width = 0.35
 
+    # 1. Biểu đồ số lượng nút mở rộng (Nodes Expanded) - Thang Logarithmic
     fig, ax = plt.subplots(figsize=(8, 6))
     rects1 = ax.bar(x - width/2, ucs_expanded, width, label='UCS', color='#4A90E2', edgecolor='black')
     rects2 = ax.bar(x + width/2, astar_expanded, width, label='A* (Hungarian Heuristic)', color='#E94E77', edgecolor='black')
     ax.set_yscale('log')
-    ax.set_ylabel('Số Node Mở Rộng (Thang Logarithmic)')
-    ax.set_title('Độ Phức Tạp Không Gian & Thời Gian: Số Node Mở Rộng (UCS vs A*)')
+    ax.set_ylabel('Số Node Mở Rộng (Thang Logarithmic)', fontsize=11)
+    ax.set_title('Độ Phức Tạp Không Gian & Thời Gian: Số Node Mở Rộng (UCS vs A*)', fontsize=12, fontweight='bold')
     ax.set_xticks(x)
-    ax.set_xticklabels(labels, rotation=20, ha='right', fontsize=9)
-    ax.legend()
+    ax.set_xticklabels(labels, rotation=15, ha='right', fontsize=10)
+    ax.legend(fontsize=10)
     ax.grid(axis='y', linestyle='--', alpha=0.6)
+
+    for rect in rects1:
+        h = rect.get_height()
+        ax.annotate(f'{int(h):,}', xy=(rect.get_x() + rect.get_width() / 2, h),
+                    xytext=(0, 4), textcoords="offset points", ha='center', va='bottom', fontsize=8, rotation=20)
+    for rect in rects2:
+        h = rect.get_height()
+        ax.annotate(f'{int(h):,}', xy=(rect.get_x() + rect.get_width() / 2, h),
+                    xytext=(0, 4), textcoords="offset points", ha='center', va='bottom', fontsize=8, rotation=20)
+
     fig.tight_layout()
     plot_path1 = os.path.join(plots_dir, "nodes_comparison.png")
     fig.savefig(plot_path1, dpi=200)
     plt.close(fig)
     print(f"\n[+] Đã lưu biểu đồ: {plot_path1}")
 
+    # 2. Biểu đồ thời gian thực thi (Execution Time)
     fig, ax = plt.subplots(figsize=(8, 6))
-    ax.bar(x - width/2, ucs_time, width, label='UCS', color='#4A90E2', edgecolor='black')
-    ax.bar(x + width/2, astar_time, width, label='A* (Hungarian Heuristic)', color='#E94E77', edgecolor='black')
-    ax.set_ylabel('Thời Gian Thực Thi (Giây)')
-    ax.set_title('Độ Phức Tạp Thời Gian: Thời Gian CPU (UCS vs A*)')
+    rects1 = ax.bar(x - width/2, ucs_time, width, label='UCS', color='#4A90E2', edgecolor='black')
+    rects2 = ax.bar(x + width/2, astar_time, width, label='A* (Hungarian Heuristic)', color='#E94E77', edgecolor='black')
+    ax.set_ylabel('Thời Gian Thực Thi (Giây)', fontsize=11)
+    ax.set_title('Độ Phức Tạp Thời Gian: Thời Gian CPU (UCS vs A*)', fontsize=12, fontweight='bold')
     ax.set_xticks(x)
-    ax.set_xticklabels(labels, rotation=20, ha='right', fontsize=9)
-    ax.legend()
+    ax.set_xticklabels(labels, rotation=15, ha='right', fontsize=10)
+    ax.legend(fontsize=10)
     ax.grid(axis='y', linestyle='--', alpha=0.6)
+
+    for rect in rects1:
+        h = rect.get_height()
+        ax.annotate(f'{h:.3f}s', xy=(rect.get_x() + rect.get_width() / 2, h),
+                    xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
+    for rect in rects2:
+        h = rect.get_height()
+        ax.annotate(f'{h:.3f}s', xy=(rect.get_x() + rect.get_width() / 2, h),
+                    xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
+
     fig.tight_layout()
     plot_path2 = os.path.join(plots_dir, "time_comparison.png")
     fig.savefig(plot_path2, dpi=200)
     plt.close(fig)
     print(f"[+] Đã lưu biểu đồ: {plot_path2}")
 
+    # 3. Biểu đồ bộ nhớ RAM tiêu thụ (Peak RAM)
     fig, ax = plt.subplots(figsize=(8, 6))
-    ax.bar(x - width/2, ucs_mem, width, label='UCS', color='#4A90E2', edgecolor='black')
-    ax.bar(x + width/2, astar_mem, width, label='A* (Hungarian Heuristic)', color='#E94E77', edgecolor='black')
-    ax.set_ylabel('Bộ Nhớ RAM Đỉnh (KB)')
-    ax.set_title('Độ Phức Tạp Không Gian: Bộ Nhớ RAM Đỉnh (UCS vs A*)')
+    rects1 = ax.bar(x - width/2, ucs_mem, width, label='UCS', color='#4A90E2', edgecolor='black')
+    rects2 = ax.bar(x + width/2, astar_mem, width, label='A* (Hungarian Heuristic)', color='#E94E77', edgecolor='black')
+    ax.set_ylabel('Bộ Nhớ RAM Đỉnh (KB)', fontsize=11)
+    ax.set_title('Độ Phức Tạp Không Gian: Bộ Nhớ RAM Đỉnh (UCS vs A*)', fontsize=12, fontweight='bold')
     ax.set_xticks(x)
-    ax.set_xticklabels(labels, rotation=20, ha='right', fontsize=9)
-    ax.legend()
+    ax.set_xticklabels(labels, rotation=15, ha='right', fontsize=10)
+    ax.legend(fontsize=10)
     ax.grid(axis='y', linestyle='--', alpha=0.6)
+
+    for rect in rects1:
+        h = rect.get_height()
+        txt = f'{h/1024:.1f}MB' if h >= 1024 else f'{h:.0f}KB'
+        ax.annotate(txt, xy=(rect.get_x() + rect.get_width() / 2, h),
+                    xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
+    for rect in rects2:
+        h = rect.get_height()
+        txt = f'{h/1024:.1f}MB' if h >= 1024 else f'{h:.0f}KB'
+        ax.annotate(txt, xy=(rect.get_x() + rect.get_width() / 2, h),
+                    xytext=(0, 3), textcoords="offset points", ha='center', va='bottom', fontsize=8)
+
     fig.tight_layout()
     plot_path3 = os.path.join(plots_dir, "memory_comparison.png")
     fig.savefig(plot_path3, dpi=200)
