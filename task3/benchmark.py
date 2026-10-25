@@ -64,7 +64,7 @@ def run_single_experiment(map_path: str, algorithm: str, timeout: float = 30.0) 
 
 def run_full_benchmark():
     test_cases = [
-        {"name": "Small Easy (2 Boxes)", "file": "maps/map_easy.txt", "boxes": 2},
+        {"name": "Small Easy (2 Boxes)", "file": "maps/map_small_easy.txt", "boxes": 2},
         {"name": "Example (Medium)", "file": "maps/example_map.txt", "boxes": 7},
         {"name": "Medium Obstacle (8 Boxes)", "file": "maps/map_medium.txt", "boxes": 8},
     ]

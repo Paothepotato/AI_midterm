@@ -196,7 +196,7 @@ def run_heuristic_verification():
     print("TASK 4: KIỂM CHỨNG LÝ THUYẾT VÀ THỰC NGHIỆM TÍNH CHẤT HEURISTIC")
     print("=" * 80)
 
-    board = Board.from_file("maps/map_easy.txt")
+    board = Board.from_file("maps/map_small_easy.txt")
     print(f"Đã nạp bản đồ: {board.name} ({board.width}x{board.height})")
 
     samples = sample_states_from_search(board, max_samples=40)
