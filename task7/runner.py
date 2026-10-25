@@ -25,13 +25,10 @@ class DecisionRunner:
         t0_start = time.perf_counter()
         try:
             act0 = self.agent0.choose_action(board, state, player=0, budget_seconds=0.8)
-            t0_end = time.perf_counter()
-            timings[0] = t0_end - t0_start
+            timings[0] = time.perf_counter() - t0_start
+            actions[0] = act0 if timings[0] <= limit_seconds else WAIT_ACTION
             if timings[0] > limit_seconds:
-                actions[0] = WAIT_ACTION
-                errors[0] = f"Quá hạn thời gian ({timings[0]:.3f}s > {limit_seconds}s)"
-            else:
-                actions[0] = act0
+                errors[0] = f"Timeout ({timings[0]:.3f}s)"
         except Exception as e:
             timings[0] = time.perf_counter() - t0_start
             actions[0] = WAIT_ACTION
@@ -40,16 +37,17 @@ class DecisionRunner:
         t1_start = time.perf_counter()
         try:
             act1 = self.agent1.choose_action(board, state, player=1, budget_seconds=0.8)
-            t1_end = time.perf_counter()
-            timings[1] = t1_end - t1_start
+            timings[1] = time.perf_counter() - t1_start
+            actions[1] = act1 if timings[1] <= limit_seconds else WAIT_ACTION
             if timings[1] > limit_seconds:
-                actions[1] = WAIT_ACTION
-                errors[1] = f"Quá hạn thời gian ({timings[1]:.3f}s > {limit_seconds}s)"
-            else:
-                actions[1] = act1
+                errors[1] = f"Timeout ({timings[1]:.3f}s)"
         except Exception as e:
             timings[1] = time.perf_counter() - t1_start
             actions[1] = WAIT_ACTION
             errors[1] = str(e)
 
         return actions, timings, errors
+
+    def close(self):
+        """Dong runner, giai phong tai nguyen neu can."""
+        pass

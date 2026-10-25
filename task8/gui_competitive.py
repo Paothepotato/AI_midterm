@@ -1,0 +1,245 @@
+import os
+import sys
+import pygame
+from typing import List, Tuple, Optional
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.abspath(os.path.join(CURRENT_DIR, ".."))
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
+try:
+    from core.board import Board
+    from core.competition import Competition
+    from core.state import CompetitiveState
+    from core.gui_theme import (
+        COLOR_BG, COLOR_HUD_BG, COLOR_HUD_LINE, COLOR_TEXT, COLOR_TEXT_MUTED,
+        COLOR_BOX_NEUTRAL, COLOR_BOX_0, COLOR_BOX_1, COLOR_AGENT_0, COLOR_AGENT_1,
+        get_system_font, draw_floor, draw_wall, draw_box, draw_agent
+    )
+    from task7.runner import DecisionRunner
+except ImportError:
+    from board import Board
+    from competitive import Competition, CompetitiveState
+    from runner import DecisionRunner
+    from core.gui_theme import (
+        COLOR_BG, COLOR_HUD_BG, COLOR_HUD_LINE, COLOR_TEXT, COLOR_TEXT_MUTED,
+        COLOR_BOX_NEUTRAL, COLOR_BOX_0, COLOR_BOX_1, COLOR_AGENT_0, COLOR_AGENT_1,
+        get_system_font, draw_floor, draw_wall, draw_box, draw_agent
+    )
+
+
+def resolve_map_path(map_name_or_path: str) -> str:
+    candidates = [
+        map_name_or_path,
+        os.path.join(PROJECT_ROOT, map_name_or_path),
+        os.path.join(PROJECT_ROOT, "maps", os.path.basename(map_name_or_path)),
+        os.path.join(CURRENT_DIR, "..", "maps", os.path.basename(map_name_or_path))
+    ]
+    for c in candidates:
+        if os.path.isfile(c):
+            return os.path.abspath(c)
+    return map_name_or_path
+
+
+class CompetitiveGUI:
+    """Giao dien do hoa Pygame cho tro choi Sokoban che do doi khang hai agent."""
+
+    def __init__(self, map_path: str = "maps/competitive_map.txt", default_n: int = 30):
+        pygame.init()
+        pygame.display.set_caption("Sokoban AI - Competitive 2 Agents")
+
+        self.map_file = resolve_map_path(map_path)
+        if not os.path.isfile(self.map_file):
+            raise FileNotFoundError(f"Khong tim thay file ban do doi khang: {self.map_file}")
+
+        self.board = Board.from_file(self.map_file)
+        self.limit_steps = int(default_n)
+        self.competition = Competition(self.board, limit=self.limit_steps)
+        self.runner = DecisionRunner()
+
+        self.cell_size = 48
+        self.hud_height = 130
+        self.grid_width = self.board.width * self.cell_size
+        self.grid_height = self.board.height * self.cell_size
+        self.screen_width = max(self.grid_width, 720)
+        self.screen_height = self.grid_height + self.hud_height
+
+        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
+        self.clock = pygame.time.Clock()
+
+        # Phong chu da nen tang
+        self.font_main = get_system_font(18, bold=True)
+        self.font_sub = get_system_font(14)
+        self.font_title = get_system_font(20, bold=True)
+
+        self.history_states: List[CompetitiveState] = [self.competition.create_initial_state()]
+        self.history_actions: List[Tuple[str, str]] = []
+        self.history_timings: List[Tuple[float, float]] = []
+        self.current_idx = 0
+
+        self.is_paused = True
+        self.step_delay_ms = 400
+        self.last_step_time = pygame.time.get_ticks()
+
+    def _draw_hud(self):
+        hud_rect = pygame.Rect(0, 0, self.screen_width, self.hud_height)
+        pygame.draw.rect(self.screen, COLOR_HUD_BG, hud_rect)
+        pygame.draw.line(self.screen, COLOR_HUD_LINE, (0, self.hud_height), (self.screen_width, self.hud_height), 2)
+
+        cur_state = self.history_states[self.current_idx]
+        score_0, score_1 = cur_state.get_score()
+
+        status_txt = "PAUSED" if self.is_paused else "PLAYING"
+        if self.competition.is_game_over(cur_state):
+            winner = self.competition.get_winner(cur_state)
+            status_txt = "HOA NHAU!" if winner is None else f"AGENT {winner} CHIEN THANG!"
+
+        # Dong 1: So luot va trang thai hoat dong
+        turn_str = f"Luot: {cur_state.turn} / {self.limit_steps} | [{status_txt}]"
+        self.screen.blit(self.font_title.render(turn_str, True, COLOR_TEXT), (20, 10))
+
+        # Dong 2: Ti so hai ben
+        txt_p0 = self.font_main.render(f"Agent 0 (A): {score_0} diem", True, COLOR_AGENT_0)
+        txt_p1 = self.font_main.render(f"Agent 1 (Z): {score_1} diem", True, COLOR_AGENT_1)
+        self.screen.blit(txt_p0, (20, 42))
+        self.screen.blit(txt_p1, (self.screen_width - 240, 42))
+
+        # Dong 3: Nuoc di gan nhat va thoi gian phan hoi
+        if self.current_idx > 0 and self.current_idx - 1 < len(self.history_actions):
+            a0, a1 = self.history_actions[self.current_idx - 1]
+            t0, t1 = self.history_timings[self.current_idx - 1]
+            detail_str = f"Nuoc di gan nhat: A0={a0} ({t0*1000:.1f}ms) | A1={a1} ({t1*1000:.1f}ms)"
+        else:
+            detail_str = "Trang thai xuat phat tran dau"
+        self.screen.blit(self.font_sub.render(detail_str, True, COLOR_TEXT_MUTED), (20, 72))
+
+        # Dong 4: Huong dan phim bam
+        guide_str = "Phim: [Space] Pause/Play | [->] Tien | [<-] Lui | [R] Reset | [Esc] Thoat"
+        self.screen.blit(self.font_sub.render(guide_str, True, (180, 185, 195)), (20, 98))
+
+    def _draw_board(self):
+        offset_x = (self.screen_width - self.grid_width) // 2
+        offset_y = self.hud_height
+
+        cur_state = self.history_states[self.current_idx]
+        boxes_dict = dict(zip(cur_state.boxes, cur_state.owners))
+
+        for y in range(self.board.height):
+            for x in range(self.board.width):
+                pos = (x, y)
+                px = offset_x + x * self.cell_size
+                py = offset_y + y * self.cell_size
+                rect = pygame.Rect(px, py, self.cell_size, self.cell_size)
+
+                # Ve tuong
+                if pos in self.board.walls:
+                    draw_wall(self.screen, rect)
+                    continue
+
+                # Ve san va dich
+                if pos in self.board.floors:
+                    is_goal = pos in self.board.goals
+                    draw_floor(self.screen, rect, is_goal=is_goal)
+
+                    # Ve hop va to mau theo chu so huu (0: xanh, 1: do, None: vang)
+                    if pos in boxes_dict:
+                        owner = boxes_dict[pos]
+                        if owner == 0:
+                            box_color = COLOR_BOX_0
+                        elif owner == 1:
+                            box_color = COLOR_BOX_1
+                        else:
+                            box_color = COLOR_BOX_NEUTRAL
+                        draw_box(self.screen, rect, box_color)
+
+                    # Ve Agent 0 (A)
+                    if pos == cur_state.players[0]:
+                        center = rect.center
+                        radius = self.cell_size // 3
+                        draw_agent(self.screen, center, radius, COLOR_AGENT_0, "0", self.font_sub)
+
+                    # Ve Agent 1 (Z)
+                    if pos == cur_state.players[1]:
+                        center = rect.center
+                        radius = self.cell_size // 3
+                        draw_agent(self.screen, center, radius, COLOR_AGENT_1, "1", self.font_sub)
+
+    def _step_forward(self):
+        if self.current_idx < len(self.history_states) - 1:
+            self.current_idx += 1
+            return
+
+        cur_state = self.history_states[-1]
+        if self.competition.is_game_over(cur_state):
+            self.is_paused = True
+            return
+
+        actions, timings, errors = self.runner.decide(self.board, cur_state, limit_seconds=1.0)
+        next_state = self.competition.step(cur_state, actions)
+
+        self.history_states.append(next_state)
+        self.history_actions.append((actions[0], actions[1]))
+        self.history_timings.append((timings[0], timings[1]))
+        self.current_idx += 1
+
+    def _step_backward(self):
+        if self.current_idx > 0:
+            self.current_idx -= 1
+
+    def run(self):
+        running = True
+        while running:
+            now = pygame.time.get_ticks()
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    running = False
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        self.is_paused = not self.is_paused
+                    elif event.key == pygame.K_RIGHT:
+                        self.is_paused = True
+                        self._step_forward()
+                    elif event.key == pygame.K_LEFT:
+                        self.is_paused = True
+                        self._step_backward()
+                    elif event.key == pygame.K_r:
+                        self.history_states = [self.competition.create_initial_state()]
+                        self.history_actions.clear()
+                        self.history_timings.clear()
+                        self.current_idx = 0
+                        self.is_paused = True
+                    elif event.key == pygame.K_ESCAPE:
+                        running = False
+
+            if not self.is_paused and now - self.last_step_time >= self.step_delay_ms:
+                self.last_step_time = now
+                self._step_forward()
+
+            self.screen.fill(COLOR_BG)
+            self._draw_hud()
+            self._draw_board()
+            pygame.display.flip()
+            self.clock.tick(30)
+
+        self.runner.close()
+        pygame.quit()
+
+
+if __name__ == "__main__":
+    map_target = "maps/competitive_map.txt"
+    steps_n = 30
+
+    if len(sys.argv) > 1 and sys.argv[1].isdigit():
+        steps_n = int(sys.argv[1])
+    elif len(sys.argv) > 1:
+        map_target = sys.argv[1]
+    if len(sys.argv) > 2 and sys.argv[2].isdigit():
+        steps_n = int(sys.argv[2])
+
+    print(f"Khoi dong Sokoban Competitive GUI:")
+    print(f" - Ban do  : {map_target}")
+    print(f" - So luot n: {steps_n}")
+    app = CompetitiveGUI(map_path=map_target, default_n=steps_n)
+    app.run()

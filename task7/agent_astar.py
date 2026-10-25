@@ -1,173 +1,177 @@
-from collections import deque
 import heapq
 import time
+from collections import deque
 from typing import Dict, List, Optional, Set, Tuple
 
 from core.board import Board
 from core.constants import ACTIONS, WAIT_ACTION
+from core.coordinator import MultiAgentCoordinator
+from core.deadlock import get_goal_bfs_distances, get_safe_box_cells, is_safe_push
 from core.state import CompetitiveState, Coord
+
+_coordinator = MultiAgentCoordinator(history_len=8)
+_last_attempted_act: Optional[Tuple[Coord, str]] = None
+
+
+def _bfs_path_to_targets(
+    board: Board,
+    start: Coord,
+    targets: Set[Coord],
+    obstacles: Set[Coord],
+    forbidden_first_act: Optional[str] = None,
+    budget_s: float = 0.3
+) -> Optional[str]:
+    if not targets or start in targets:
+        return None
+
+    t0 = time.perf_counter()
+    q = deque([(start, None)])
+    visited = {start}
+
+    while q:
+        if time.perf_counter() - t0 > budget_s:
+            break
+
+        curr, first_act = q.popleft()
+        if curr in targets:
+            if first_act != forbidden_first_act:
+                return first_act
+
+        for act_name, (dx, dy) in ACTIONS.items():
+            if curr == start and act_name == forbidden_first_act:
+                continue
+
+            nbr = (curr[0] + dx, curr[1] + dy)
+            if nbr in board.floors and nbr not in obstacles and nbr not in visited:
+                visited.add(nbr)
+                fa = first_act if first_act is not None else act_name
+                q.append((nbr, fa))
+
+    return None
 
 
 def choose_action(
     board: Board,
     state: CompetitiveState,
-    player: int,
+    player: int = 0,
     budget_seconds: float = 0.8
 ) -> str:
-    start_time = time.perf_counter()
+    global _last_attempted_act
+    t0 = time.perf_counter()
 
     my_pos = state.players[player]
     opp_pos = state.players[1 - player]
     boxes_set = set(state.boxes)
-    px, py = my_pos
-
     box_owner_map = {b: o for b, o in zip(state.boxes, state.owners)}
-
-    available_goals = [g for g in board.goals if box_owner_map.get(g) != player]
-    if not available_goals:
-        return WAIT_ACTION
-
-    candidate_boxes = [b for b, o in box_owner_map.items() if o != player]
-    if not candidate_boxes:
-        return WAIT_ACTION
-
-    best_candidate = None
-    best_cost = 10**6
-
-    for b in candidate_boxes:
-        for g in available_goals:
-            d_bg = abs(b[0] - g[0]) + abs(b[1] - g[1])
-
-            d_pb = abs(px - b[0]) + abs(py - b[1])
-
-            cost = d_bg * 3 + d_pb
-            if cost < best_cost:
-                best_cost = cost
-                best_candidate = (b, g)
-
-    if best_candidate is None:
-        return WAIT_ACTION
-
-    target_box, target_goal = best_candidate
-    bx, by = target_box
-    gx, gy = target_goal
-
-    for act_name, (dx, dy) in ACTIONS.items():
-        if (px + dx, py + dy) in boxes_set:
-            adj_box = (px + dx, py + dy)
-            box_dest = (adj_box[0] + dx, adj_box[1] + dy)
-
-            if (box_dest in board.floors and
-                box_dest not in boxes_set and
-                box_dest != opp_pos):
-                if box_dest in available_goals:
-                    return act_name
-
-    if (abs(px - bx) + abs(py - by)) == 1:
-        push_dx = bx - px
-        push_dy = by - py
-        for act_name, (dx, dy) in ACTIONS.items():
-            if (dx, dy) == (push_dx, push_dy):
-                dest = (bx + dx, by + dy)
-                if (dest in board.floors and
-                    dest not in boxes_set and
-                    dest != opp_pos):
-                    curr_d = abs(bx - gx) + abs(by - gy)
-                    nxt_d = abs(dest[0] - gx) + abs(dest[1] - gy)
-
-                    if nxt_d <= curr_d or dest in available_goals:
-                        return act_name
-
-    ideal_push_positions = []
-    for act_name, (dx, dy) in ACTIONS.items():
-        behind_pos = (bx - dx, by - dy)
-        dest_pos = (bx + dx, by + dy)
-        if (behind_pos in board.floors and
-            behind_pos not in boxes_set and
-            behind_pos != opp_pos and
-            dest_pos in board.floors and
-            dest_pos not in boxes_set and
-            dest_pos != opp_pos):
-            curr_d = abs(bx - gx) + abs(by - gy)
-            dest_d = abs(dest_pos[0] - gx) + abs(dest_pos[1] - gy)
-            if dest_d <= curr_d or dest_pos in available_goals:
-                ideal_push_positions.append(behind_pos)
-
     obstacles = boxes_set | {opp_pos}
-    if ideal_push_positions:
-        act = _astar_path(board, my_pos, set(ideal_push_positions), obstacles, timeout=0.3)
-        if act is not None:
-            return act
 
-    adj_cells = set()
-    for dx, dy in ACTIONS.values():
-        c = (bx + dx, by + dy)
-        if c in board.floors and c not in obstacles:
-            adj_cells.add(c)
+    forbidden_act = None
+    if _last_attempted_act is not None:
+        prev_pos, prev_act = _last_attempted_act
+        if prev_pos == my_pos and prev_act != WAIT_ACTION:
+            forbidden_act = prev_act
 
-    if adj_cells:
-        act = _astar_path(board, my_pos, adj_cells, obstacles, timeout=0.2)
-        if act is not None:
-            return act
+    in_cycle = _coordinator.is_in_cycle(player)
+    goal_dists = get_goal_bfs_distances(board)
+
+    open_goals = [g for g in board.goals if box_owner_map.get(g) != player]
+    if not open_goals:
+        _last_attempted_act = (my_pos, WAIT_ACTION)
+        return WAIT_ACTION
+
+    agent_dist: Dict[Coord, int] = {my_pos: 0}
+    q_ag = deque([my_pos])
+    while q_ag:
+        c = q_ag.popleft()
+        d = agent_dist[c]
+        for dx, dy in ACTIONS.values():
+            nbr = (c[0] + dx, c[1] + dy)
+            if nbr in board.floors and nbr not in obstacles and nbr not in agent_dist:
+                agent_dist[nbr] = d + 1
+                q_ag.append(nbr)
+
+    neutral_boxes = [b for b, o in box_owner_map.items() if o == -1]
+    opp = 1 - player
+    opp_scored_boxes = [b for b, o in box_owner_map.items() if o == opp and b in board.goals]
+
+    categories = [
+        (neutral_boxes, False),
+        (opp_scored_boxes, True)
+    ]
+
+    candidates = []
+
+    for b_list, is_steal in categories:
+        for box in b_list:
+            bx, by = box
+            for push_act, (dx, dy) in ACTIONS.items():
+                push_from = (bx - dx, by - dy)
+                box_dest = (bx + dx, by + dy)
+
+                if my_pos == push_from and push_act == forbidden_act:
+                    continue
+
+                if push_from not in board.floors or push_from in boxes_set or push_from == opp_pos:
+                    continue
+                if box_dest not in board.floors or box_dest in boxes_set or box_dest == opp_pos:
+                    continue
+
+                if not is_safe_push(board, boxes_set, box, box_dest):
+                    continue
+
+                d_agent = agent_dist.get(push_from, 10**6)
+                if d_agent == 10**6:
+                    continue
+
+                best_box_to_goal = 10**6
+                for g in open_goals:
+                    if g in goal_dists and box_dest in goal_dists[g]:
+                        d_bg = goal_dists[g][box_dest]
+                        if d_bg < best_box_to_goal:
+                            best_box_to_goal = d_bg
+
+                if best_box_to_goal == 10**6:
+                    continue
+
+                if is_steal:
+                    bonus = -60 if box_dest in board.goals else -25
+                    if in_cycle:
+                        bonus -= 50
+                    score = d_agent * 2 + best_box_to_goal * 3 + bonus
+                else:
+                    bonus = -80 if box_dest in open_goals else 0
+                    score = d_agent * 2 + best_box_to_goal * 3 + bonus
+
+                candidates.append((score, push_from, push_act, box))
+
+    if candidates:
+        candidates.sort(key=lambda c: c[0])
+        selected_idx = 1 if (in_cycle and len(candidates) > 1) else 0
+        _, push_from, push_act, target_box = candidates[selected_idx]
+
+        if my_pos == push_from and push_act != forbidden_act:
+            _last_attempted_act = (my_pos, push_act)
+            return push_act
+
+        time_left = budget_seconds - (time.perf_counter() - t0)
+        step_act = _bfs_path_to_targets(
+            board, my_pos, {push_from}, obstacles,
+            forbidden_first_act=forbidden_act, budget_s=max(0.05, time_left * 0.7)
+        )
+
+        if step_act is not None:
+            safe_act = _coordinator.resolve_head_on_conflict(board, my_pos, opp_pos, step_act, player)
+            if safe_act:
+                _last_attempted_act = (my_pos, safe_act)
+                return safe_act
 
     for act_name, (dx, dy) in ACTIONS.items():
-        tgt = (px + dx, py + dy)
-        if tgt in boxes_set:
-            box_dest = (tgt[0] + dx, tgt[1] + dy)
-            if (box_dest in board.floors and
-                box_dest not in boxes_set and
-                box_dest != opp_pos):
-                return act_name
-
-    for act_name, (dx, dy) in ACTIONS.items():
-        nxt = (px + dx, py + dy)
-        if nxt in board.floors and nxt not in boxes_set and nxt != opp_pos:
+        if act_name == forbidden_act:
+            continue
+        nbr = (my_pos[0] + dx, my_pos[1] + dy)
+        if nbr in board.floors and nbr not in obstacles:
+            _last_attempted_act = (my_pos, act_name)
             return act_name
 
+    _last_attempted_act = (my_pos, WAIT_ACTION)
     return WAIT_ACTION
-
-
-def _astar_path(
-    board: Board,
-    start: Coord,
-    targets: Set[Coord],
-    obstacles: Set[Coord],
-    timeout: float = 0.3
-) -> Optional[str]:
-    if start in targets:
-        return None
-
-    start_time = time.perf_counter()
-    frontier = []
-    counter = 0
-
-    def h_cost(c: Coord) -> int:
-        return min(abs(c[0] - t[0]) + abs(c[1] - t[1]) for t in targets)
-
-    heapq.heappush(frontier, (h_cost(start), counter, 0, start, None))
-    cost_so_far = {start: 0}
-
-    while frontier:
-        if time.perf_counter() - start_time > timeout:
-            break
-
-        f, _, g, curr, first_act = heapq.heappop(frontier)
-
-        if curr in targets:
-            return first_act
-
-        cx, cy = curr
-        for act_name, (dx, dy) in ACTIONS.items():
-            nbr = (cx + dx, cy + dy)
-
-            if nbr in board.floors and nbr not in obstacles:
-                new_g = g + 1
-                if nbr not in cost_so_far or new_g < cost_so_far[nbr]:
-                    cost_so_far[nbr] = new_g
-
-                    act_to_pass = first_act if first_act is not None else act_name
-                    counter += 1
-                    pri = new_g + h_cost(nbr)
-                    heapq.heappush(frontier, (pri, counter, new_g, nbr, act_to_pass))
-
-    return None
