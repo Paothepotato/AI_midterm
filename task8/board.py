@@ -1,6 +1,3 @@
-# board.py
-# Quan ly cau truc ban choi, doc va kiem tra tinh hop le cua map
-
 from typing import Set, Tuple, Optional, FrozenSet
 
 class Board:
@@ -10,12 +7,10 @@ class Board:
         self.filename = filename
         self.name = filename.replace("\\", "/").split("/")[-1]
         
-        # Tap hop cac o co dinh
         self.walls: FrozenSet[Tuple[int, int]] = frozenset()
         self.floors: FrozenSet[Tuple[int, int]] = frozenset()
         self.goals: FrozenSet[Tuple[int, int]] = frozenset()
         
-        # Vi tri khoi tao
         self.initial_agent: Tuple[int, int] = (0, 0)
         self.second_player: Optional[Tuple[int, int]] = None
         self.initial_boxes: Tuple[Tuple[int, int], ...] = ()
@@ -36,7 +31,6 @@ class Board:
         self.height = len(lines)
         self.width = max(len(line) for line in lines)
         
-        # Chuan hoa do dai cac dong bang cach them khoang trang dem o cuoi
         padded_lines = [line.ljust(self.width, " ") for line in lines]
         
         raw_walls: Set[Tuple[int, int]] = set()
@@ -67,7 +61,6 @@ class Board:
                 else:
                     raise ValueError(f"Ky tu khong hop le trong map: '{char}' tai ({x}, {y})")
 
-        # Kiem tra so luong agent hop le
         if len(agent_positions) != 1:
             raise ValueError(f"Map phai co dung 1 agent A, hien co: {len(agent_positions)}")
         if len(second_positions) > 1:
@@ -76,13 +69,11 @@ class Board:
         self.initial_agent = agent_positions[0]
         self.second_player = second_positions[0] if second_positions else None
         
-        # Kiem tra so luong hop va dich
         if len(raw_boxes) == 0:
             raise ValueError("Map phai co it nhat 1 hop.")
         if len(raw_boxes) != len(raw_goals):
             raise ValueError(f"So luong hop ({len(raw_boxes)}) khong bang so dich ({len(raw_goals)}).")
 
-        # Xac dinh phan dem ngoai map bang BFS tu vien ngoai cung (chi di qua khoang trang)
         outside: Set[Tuple[int, int]] = set()
         queue = []
         for x in range(self.width):
@@ -105,10 +96,8 @@ class Board:
                         outside.add((nx, ny))
                         queue.append((nx, ny))
 
-        # O san (floors) la cac o ben trong khung tuong (khong thuoc outside va khong phai tuong)
         raw_floors = (all_cells - outside) - raw_walls
         
-        # Cac vi tri agent, box, goal phai nam trong vung san di chuyen duoc
         for box in raw_boxes:
             if box not in raw_floors:
                 raise ValueError(f"Hop tai {box} nam ngoai vung choi.")
