@@ -1,6 +1,3 @@
-# runner.py
-# Bo dieu phoi thoi gian va quan ly quyet dinh dong thoi giua 2 agent
-
 import time
 from typing import Tuple, List, Optional
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
@@ -13,7 +10,6 @@ class DecisionRunner:
     """Dieu phoi thuc thi 2 agent song song, kiem soat thoi gian cung limit_seconds=1.0s."""
 
     def __init__(self):
-        # Su dung pool de goi 2 agent dong thoi
         self._executor = ThreadPoolExecutor(max_workers=2)
 
     def _call_agent(self, agent_func, board: Board, state: CompetitiveState, player: int, budget: float):
@@ -31,7 +27,6 @@ class DecisionRunner:
         """Thu thap hanh dong tu 2 agent voi thoi gian toi da limit_seconds."""
         budget = max(0.1, limit_seconds - 0.2)
         
-        # Gui yeu cau den ca 2 agent dong thoi
         future_0 = self._executor.submit(self._call_agent, agent_0.choose_action, board, state, 0, budget)
         future_1 = self._executor.submit(self._call_agent, agent_1.choose_action, board, state, 1, budget)
 
@@ -39,7 +34,6 @@ class DecisionRunner:
         timings = [0.0, 0.0]
         errors = [None, None]
 
-        # Thu nhap ket qua Agent 0
         try:
             act0, t0, err0 = future_0.result(timeout=limit_seconds)
             timings[0] = round(t0, 4)
@@ -56,7 +50,6 @@ class DecisionRunner:
             errors[0] = "Agent 0 qua han thoi gian (Timeout > 1.0s)"
             actions[0] = "Wait"
 
-        # Thu nhap ket qua Agent 1
         try:
             act1, t1, err1 = future_1.result(timeout=limit_seconds)
             timings[1] = round(t1, 4)
