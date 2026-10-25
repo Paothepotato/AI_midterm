@@ -65,7 +65,7 @@ def run_single_experiment(map_path: str, algorithm: str, timeout: float = 30.0) 
 def run_full_benchmark():
     test_cases = [
         {"name": "Small Easy (2 Boxes)", "file": "maps/map_easy.txt", "boxes": 2},
-        {"name": "Medium (3 Boxes)", "file": "maps/map_medium.txt", "boxes": 3},
+        {"name": "Medium Obstacle (5 Boxes)", "file": "maps/map_medium.txt", "boxes": 5},
         {"name": "Complex (7 Boxes)", "file": "maps/example_map.txt", "boxes": 7},
     ]
 
@@ -80,8 +80,8 @@ def run_full_benchmark():
         map_file = tc["file"]
         print(f"\n[+] Đang đo lường trên: {map_name} ({map_file})...")
 
-        ucs_data = run_single_experiment(map_file, "ucs", timeout=20.0)
-        astar_data = run_single_experiment(map_file, "astar", timeout=20.0)
+        ucs_data = run_single_experiment(map_file, "ucs", timeout=25.0)
+        astar_data = run_single_experiment(map_file, "astar", timeout=25.0)
 
         node_reduction = 0.0
         if ucs_data["expanded"] > 0:
@@ -161,7 +161,7 @@ def generate_benchmark_plots(results: List[Dict[str, Any]]):
     width = 0.35
 
     # 1. Biểu đồ số lượng nút mở rộng (Nodes Expanded) - Thang Logarithmic
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(8.5, 6))
     rects1 = ax.bar(x - width/2, ucs_expanded, width, label='UCS', color='#4A90E2', edgecolor='black')
     rects2 = ax.bar(x + width/2, astar_expanded, width, label='A* (Hungarian Heuristic)', color='#E94E77', edgecolor='black')
     ax.set_yscale('log')
@@ -188,7 +188,7 @@ def generate_benchmark_plots(results: List[Dict[str, Any]]):
     print(f"\n[+] Đã lưu biểu đồ: {plot_path1}")
 
     # 2. Biểu đồ thời gian thực thi (Execution Time)
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(8.5, 6))
     rects1 = ax.bar(x - width/2, ucs_time, width, label='UCS', color='#4A90E2', edgecolor='black')
     rects2 = ax.bar(x + width/2, astar_time, width, label='A* (Hungarian Heuristic)', color='#E94E77', edgecolor='black')
     ax.set_ylabel('Thời Gian Thực Thi (Giây)', fontsize=11)
@@ -214,7 +214,7 @@ def generate_benchmark_plots(results: List[Dict[str, Any]]):
     print(f"[+] Đã lưu biểu đồ: {plot_path2}")
 
     # 3. Biểu đồ bộ nhớ RAM tiêu thụ (Peak RAM)
-    fig, ax = plt.subplots(figsize=(8, 6))
+    fig, ax = plt.subplots(figsize=(8.5, 6))
     rects1 = ax.bar(x - width/2, ucs_mem, width, label='UCS', color='#4A90E2', edgecolor='black')
     rects2 = ax.bar(x + width/2, astar_mem, width, label='A* (Hungarian Heuristic)', color='#E94E77', edgecolor='black')
     ax.set_ylabel('Bộ Nhớ RAM Đỉnh (KB)', fontsize=11)
