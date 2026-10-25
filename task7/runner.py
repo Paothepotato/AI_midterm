@@ -49,5 +49,4 @@ class DecisionRunner:
         return actions, timings, errors
 
     def close(self):
-        """Dong runner, giai phong tai nguyen neu can."""
         pass

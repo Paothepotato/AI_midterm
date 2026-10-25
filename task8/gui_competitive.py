@@ -43,7 +43,6 @@ def resolve_map_path(map_name_or_path: str) -> str:
 
 
 class CompetitiveGUI:
-    """Giao dien do hoa Pygame cho tro choi Sokoban che do doi khang hai agent."""
 
     def __init__(self, map_path: str = "maps/competitive_map.txt", default_n: int = 30):
         pygame.init()

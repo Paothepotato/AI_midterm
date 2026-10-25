@@ -12,7 +12,6 @@ ACTIONS_DIR: Dict[str, Tuple[int, int]] = {
 
 @dataclass(frozen=True)
 class CompetitiveState:
-    """Trang thai bat bien cua tran thi dau giua 2 agent."""
     players: Tuple[Tuple[int, int], Tuple[int, int]]  
     boxes: Tuple[Tuple[int, int], ...]              
     owners: Tuple[int, ...]                           
@@ -31,7 +30,6 @@ class CompetitiveState:
 
 
 class Competition:
-    """Quan ly luat thi dau va chuyen doi trang thai dong thoi giua 2 agent."""
     
     def __init__(self, board: Board, limit_steps: int):
         if board.second_player is None:
@@ -51,7 +49,6 @@ class Competition:
         )
 
     def get_scores(self, state: CompetitiveState) -> Tuple[int, int]:
-        """Tinh diem so hien tai: so hop tren dich thuoc so huu cua tung agent."""
         score_0 = 0
         score_1 = 0
         for box, owner in zip(state.boxes, state.owners):
@@ -63,11 +60,9 @@ class Competition:
         return score_0, score_1
 
     def is_terminal(self, state: CompetitiveState) -> bool:
-        """Kiem tra tran dau da ket thuc chua (khi turn >= n)."""
         return state.turn >= self.limit_steps
 
     def get_winner(self, state: CompetitiveState) -> Optional[int]:
-        """Xac dinh nguoi chien thang: tra ve 0, 1 hoac None neu hoa."""
         s0, s1 = self.get_scores(state)
         if s0 > s1:
             return 0
@@ -76,7 +71,6 @@ class Competition:
         return None
 
     def step(self, state: CompetitiveState, actions: List[str]) -> CompetitiveState:
-        """Thuc hien mot luot choi dong thoi cho ca 2 agent voi co che giai quyet xung dot."""
         if len(actions) != 2:
             raise ValueError(f"Yeu cau dung 2 actions cho 2 agent, nhan duoc: {len(actions)}")
             

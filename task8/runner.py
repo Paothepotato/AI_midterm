@@ -7,13 +7,11 @@ import agent_0
 import agent_1
 
 class DecisionRunner:
-    """Dieu phoi thuc thi 2 agent song song, kiem soat thoi gian cung limit_seconds=1.0s."""
 
     def __init__(self):
         self._executor = ThreadPoolExecutor(max_workers=2)
 
     def _call_agent(self, agent_func, board: Board, state: CompetitiveState, player: int, budget: float):
-        """Goi ham choose_action cua agent va tra ve ket qua cung thoi gian thuc thi."""
         t_start = time.perf_counter()
         try:
             act = agent_func(board, state, player=player, budget_seconds=budget)
@@ -24,7 +22,6 @@ class DecisionRunner:
             return "Wait", elapsed, str(e)
 
     def decide(self, board: Board, state: CompetitiveState, limit_seconds: float = 1.0) -> Tuple[List[str], List[float], List[Optional[str]]]:
-        """Thu thap hanh dong tu 2 agent voi thoi gian toi da limit_seconds."""
         budget = max(0.1, limit_seconds - 0.2)
         
         future_0 = self._executor.submit(self._call_agent, agent_0.choose_action, board, state, 0, budget)
@@ -69,5 +66,4 @@ class DecisionRunner:
         return actions, timings, errors
 
     def close(self):
-        """Dong executor khi tran dau ket thuc."""
         self._executor.shutdown(wait=False)

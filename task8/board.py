@@ -1,7 +1,6 @@
 from typing import Set, Tuple, Optional, FrozenSet
 
 class Board:
-    """Luu tru thong tin tinh cua ban do Sokoban (tuong, san, dich, vi tri khoi tao)."""
     
     def __init__(self, filename: str):
         self.filename = filename
@@ -21,7 +20,6 @@ class Board:
         self._load_and_parse(filename)
 
     def _load_and_parse(self, filename: str):
-        """Doc noi dung map tu file va trich xuat toa do cac phan tu."""
         with open(filename, "r", encoding="utf-8") as f:
             lines = [line.rstrip("\r\n") for line in f.readlines()]
             
