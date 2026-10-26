@@ -58,13 +58,16 @@ Tại trạng thái $s$, với cặp hành động $a = (a_0, a_1)$:
    - Ngược lại: ý định không hợp lệ $\rightarrow$ agent đứng yên (`Wait`).
 
 2. **Phân giải xung đột đồng thời (Conflict Resolution):**
-   Cả hai agent cùng hành động tại một thời điểm, do đó nếu xảy ra xung đột thì cả hai hành động đều bị hủy (đứng yên tại chỗ):
-   - **Xung đột cùng ô đến:** $p'_0 = p'_1$.
-   - **Xung đột đối đầu / đổi chỗ (Head-on swap):** $p'_0 = p_1 \land p'_1 = p_0$ (không được đi xuyên qua nhau).
-   - **Xung đột vị trí tĩnh:** Agent $i$ không được bước vào hoặc đẩy hộp vào vị trí hiện tại của agent $1-i$.
-   - **Xung đột tranh chấp hộp:** Cả hai agent cùng cố gắng đẩy chung một hộp tại vị trí $b_j$.
-   - **Xung đột hộp - người:** Ô đến của hộp bên này trùng ô đến của agent bên kia.
-   - **Xung đột hộp - hộp:** Hai hộp được đẩy đến cùng một ô đích.
+   Cả hai agent cùng hành động tại một thời điểm. Xung đột được phân giải như sau:
+   - **Xung đột cùng ô đến hoặc cùng đẩy một hộp (Quy tắc xác suất):**
+     Nếu hai agent cùng cố gắng đi vào một vị trí ($p'_0 = p'_1$) hoặc cùng cố gắng đẩy chung một hộp tại vị trí $b_j$ ($b_{\text{from0}} = b_{\text{from1}}$), một biến ngẫu nhiên liên tục $p \sim \mathcal{U}(0, 1)$ được sinh ra:
+     + Nếu $p < 0.5$: Agent 1 (Player 0) thực hiện hành động, Agent 2 (Player 1) đứng yên (mất lượt).
+     + Nếu $p \ge 0.5$: Agent 2 (Player 1) thực hiện hành động, Agent 1 (Player 0) đứng yên (mất lượt).
+   - **Các xung đột bất khả thi khác (Hủy cả hai hành động – đứng yên tại chỗ):**
+     + **Xung đột đối đầu / đổi chỗ (Head-on swap):** $p'_0 = p_1 \land p'_1 = p_0$ (không được đi xuyên qua nhau).
+     + **Xung đột vị trí tĩnh:** Agent $i$ không được bước vào hoặc đẩy hộp vào vị trí hiện tại của agent $1-i$.
+     + **Xung đột hộp - người:** Ô đến của hộp bên này trùng ô đến của agent bên kia.
+     + **Xung đột hộp - hộp:** Hai hộp được đẩy đến cùng một ô đích.
 
 3. **Cập nhật quyền sở hữu (Ownership Dynamics):**
    - Nếu Agent $i$ đẩy thành công một hộp đến vị trí thuộc tập đích $G$: $owner = i$.

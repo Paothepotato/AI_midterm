@@ -1,3 +1,4 @@
+import random
 from typing import Tuple, List, Optional, Dict
 from dataclasses import dataclass
 from board import Board
@@ -117,23 +118,30 @@ class Competition:
             v1 = False
 
         if v0 and v1:
-            conflict = False
-            if target_p0 == target_p1:
-                conflict = True
-            elif target_p0 == p1 and target_p1 == p0:
-                conflict = True
-            elif push_from0 is not None and push_from0 == push_from1:
-                conflict = True
-            elif push_to0 is not None and push_to0 == target_p1:
-                conflict = True
-            elif push_to1 is not None and push_to1 == target_p0:
-                conflict = True
-            elif push_to0 is not None and push_to0 == push_to1:
-                conflict = True
+            same_pos = (target_p0 == target_p1)
+            same_box = (push_from0 is not None and push_from0 == push_from1)
 
-            if conflict:
-                v0 = False
-                v1 = False
+            if same_pos or same_box:
+                p = random.random()
+                if p < 0.5:
+                    v1 = False
+                else:
+                    v0 = False
+
+            if v0 and v1:
+                conflict = False
+                if target_p0 == p1 and target_p1 == p0:
+                    conflict = True
+                elif push_to0 is not None and push_to0 == target_p1:
+                    conflict = True
+                elif push_to1 is not None and push_to1 == target_p0:
+                    conflict = True
+                elif push_to0 is not None and push_to0 == push_to1:
+                    conflict = True
+
+                if conflict:
+                    v0 = False
+                    v1 = False
 
         final_p0 = target_p0 if v0 else p0
         final_p1 = target_p1 if v1 else p1

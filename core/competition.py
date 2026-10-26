@@ -1,3 +1,4 @@
+import random
 from typing import List, Optional, Tuple, Set
 
 from core.board import Board
@@ -42,28 +43,29 @@ class Competition:
         intent1 = self._evaluate_single_intent(p1, act1, state, opponent_pos=p0)
 
         if intent0['valid'] and intent1['valid']:
-            conflict = False
+            same_pos = (intent0['new_p'] == intent1['new_p'])
+            same_box = (intent0['push'] and intent1['push'] and intent0['box_from'] == intent1['box_from'])
 
-            if intent0['new_p'] == intent1['new_p']:
-                conflict = True
+            if same_pos or same_box:
+                p = random.random()
+                if p < 0.5:
+                    intent1['valid'] = False
+                else:
+                    intent0['valid'] = False
 
-            if intent0['new_p'] == p1 and intent1['new_p'] == p0:
-                conflict = True
-
-            if intent0['push'] and intent1['push'] and intent0['box_from'] == intent1['box_from']:
-                conflict = True
-
-            if intent0['push'] and intent0['box_to'] == intent1['new_p']:
-                conflict = True
-            if intent1['push'] and intent1['box_to'] == intent0['new_p']:
-                conflict = True
-
-            if intent0['push'] and intent1['push'] and intent0['box_to'] == intent1['box_to']:
-                conflict = True
-
-            if conflict:
-                intent0['valid'] = False
-                intent1['valid'] = False
+            if intent0['valid'] and intent1['valid']:
+                conflict = False
+                if intent0['new_p'] == p1 and intent1['new_p'] == p0:
+                    conflict = True
+                if intent0['push'] and intent0['box_to'] == intent1['new_p']:
+                    conflict = True
+                if intent1['push'] and intent1['box_to'] == intent0['new_p']:
+                    conflict = True
+                if intent0['push'] and intent1['push'] and intent0['box_to'] == intent1['box_to']:
+                    conflict = True
+                if conflict:
+                    intent0['valid'] = False
+                    intent1['valid'] = False
 
         new_p0 = intent0['new_p'] if intent0['valid'] else p0
         new_p1 = intent1['new_p'] if intent1['valid'] else p1
