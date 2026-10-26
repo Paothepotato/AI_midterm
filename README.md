@@ -4,9 +4,10 @@ Dự án cài đặt các thuật toán tìm kiếm trí tuệ nhân tạo (UCS,
 
 ## 📂 Cấu trúc dự án
 
-```
+`
 ├── core/
 │   ├── board.py            # Mô hình biểu diễn bản đồ, tường, sàn, hộp và đích
+│   ├── competition.py      # Môi trường thi đấu đối kháng, luật chơi và tính điểm
 │   ├── constants.py        # Các hướng di chuyển và hằng số chi phí
 │   ├── coordinator.py      # Bộ điều phối xung đột va chạm và phá vỡ chu kỳ lặp
 │   ├── deadlock.py         # Module nhận diện deadlock (góc chết, cạnh tường, khối 2x2)
@@ -23,7 +24,7 @@ Dự án cài đặt các thuật toán tìm kiếm trí tuệ nhân tạo (UCS,
 ├── task7/                  # Kịch bản mô phỏng đối kháng không qua GUI
 └── task8/                  # Giao diện đồ họa Pygame đối kháng trực tiếp
 
-```
+`
 
 ## ⚙️ Hướng dẫn cài đặt
 
@@ -32,10 +33,10 @@ Dự án cài đặt các thuật toán tìm kiếm trí tuệ nhân tạo (UCS,
 2. **Cài đặt các thư viện phụ thuộc:**
    Mở terminal và chạy lệnh sau:
 
-   ```
+   `
    pip install pygame numpy matplotlib scipy
    
-   ```
+   `
 
 ## 🚀 Hướng dẫn chạy chương trình
 
@@ -45,53 +46,51 @@ Mở terminal tại thư mục gốc của dự án để thực thi các task c
 
 * **Chạy Task 1 (Kiểm chứng không gian trạng thái):**
 
-  ```
+  `
   python task1/run_task1.py
   
-  ```
+  `
 
-* *Chạy Task 2 (Giải Sokoban bằng UCS và A):*\*
+* **Chạy Task 2 (Giải Sokoban bằng UCS và A\*):**
 
-  ```
+  `
   python task2/run_task2.py
   
-  ```
+  `
 
 * **Chạy Task 3 (Thực nghiệm đo lường hiệu năng và xuất biểu đồ):**
 
-  ```
+  `
   python task3/benchmark.py
   
-  ```
+  `
 
 * **Chạy Task 4 (Kiểm chứng Heuristic Admissible & Consistent):**
 
-  ```
+  `
   python task4/verify_heuristic.py
   
-  ```
+  `
 
 * **Chạy Task 5 (Giao diện đồ họa đơn người):**
 
-  ```
-  python task5/gui_single.py maps/example_map.txt astar
-  # Hoặc sử dụng UCS:
-  python task5/gui_single.py maps/example_map.txt ucs
+  `
+  python task5/gui_single.py
   
-  ```
+  `
 
 ### 2. Chế độ đối kháng 2 Agent (Tasks 6 - 8)
 
 * **Chạy Task 7 (Mô phỏng thi đấu 2 Agent qua dòng lệnh):**
 
-  ```
+  `
   python task7/run_task7.py
   
-  ```
+  `
 
 * **Chạy Task 8 (Giao diện đồ họa thi đấu đối kháng trực tiếp):**
 
-  ```
-  python task8/gui_competitive.py maps/competitive_map.txt
+  `
+  python task8/gui_competitive.py
   
-  ```
+  `
