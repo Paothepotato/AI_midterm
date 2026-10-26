@@ -7,6 +7,7 @@ Dự án cài đặt các thuật toán tìm kiếm trí tuệ nhân tạo (UCS,
 ```
 ├── core/
 │   ├── board.py            # Mô hình biểu diễn bản đồ, tường, sàn, hộp và đích
+│   ├── competition.py      # Môi trường thi đấu đối kháng, luật chơi và tính điểm
 │   ├── constants.py        # Các hướng di chuyển và hằng số chi phí
 │   ├── coordinator.py      # Bộ điều phối xung đột va chạm và phá vỡ chu kỳ lặp
 │   ├── deadlock.py         # Module nhận diện deadlock (góc chết, cạnh tường, khối 2x2)
@@ -50,7 +51,7 @@ Mở terminal tại thư mục gốc của dự án để thực thi các task c
   
   ```
 
-* *Chạy Task 2 (Giải Sokoban bằng UCS và A):*\*
+* **Chạy Task 2 (Giải Sokoban bằng UCS và A\*):**
 
   ```
   python task2/run_task2.py
@@ -74,9 +75,7 @@ Mở terminal tại thư mục gốc của dự án để thực thi các task c
 * **Chạy Task 5 (Giao diện đồ họa đơn người):**
 
   ```
-  python task5/gui_single.py maps/example_map.txt astar
-  # Hoặc sử dụng UCS:
-  python task5/gui_single.py maps/example_map.txt ucs
+  python task5/gui_single.py
   
   ```
 
@@ -92,6 +91,6 @@ Mở terminal tại thư mục gốc của dự án để thực thi các task c
 * **Chạy Task 8 (Giao diện đồ họa thi đấu đối kháng trực tiếp):**
 
   ```
-  python task8/gui_competitive.py maps/competitive_map.txt
+  python task8/gui_competitive.py
   
   ```
