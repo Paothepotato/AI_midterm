@@ -100,10 +100,14 @@ Task 8 cho phép người dùng chỉ định số lượt tối đa để có t
   python task8/gui_competitive.py maps/competitive_map.txt [so_luot_toi_da]
 
   ```
-Giao diện có hỗ trợ các chức năng sau, người dùng có thể sử dụng chúng để theo dõi trận đấu:
+Giao diện có hỗ trợ các chức năng sau, người dùng có thể sử dụng để theo dõi trận đấu:
 
 [space]Chạy hoặc tạm dừng trận đấu.
+
 [→] Tiến từng lượt.
+
 [←]Quay lại trạng thái trước đó.
+
 [R]Khởi động lại trận đấu.
+
 [Esc]Thoát giao diện.
