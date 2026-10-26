@@ -1,10 +1,10 @@
 # Trò Chơi Sokoban Đơn và Đối Kháng (AI Project)
 
-Dự án cài đặt các thuật toán tìm kiếm trí tuệ nhân tạo (UCS, A\*) cho bài toán Sokoban đơn người và mở rộng sang hệ thống mô phỏng thi đấu đối kháng giữa 2 Agent, phát triển bằng Python và Pygame.
+Dự án cài đặt các thuật toán tìm kiếm trí tuệ nhân tạo (UCS, A*) cho bài toán Sokoban đơn người và mở rộng sang hệ thống mô phỏng thi đấu đối kháng giữa 2 Agent, phát triển bằng Python và Pygame.
 
 ## 📂 Cấu trúc dự án
 
-```
+`
 ├── core/
 │   ├── board.py            # Mô hình biểu diễn bản đồ, tường, sàn, hộp và đích
 │   ├── constants.py        # Các hướng di chuyển và hằng số chi phí
@@ -22,8 +22,7 @@ Dự án cài đặt các thuật toán tìm kiếm trí tuệ nhân tạo (UCS,
 ├── task6/                  # Mô hình hóa bài toán đối kháng 2 Agent
 ├── task7/                  # Kịch bản mô phỏng đối kháng không qua GUI
 └── task8/                  # Giao diện đồ họa Pygame đối kháng trực tiếp
-
-```
+`
 
 ## ⚙️ Hướng dẫn cài đặt
 
@@ -31,11 +30,9 @@ Dự án cài đặt các thuật toán tìm kiếm trí tuệ nhân tạo (UCS,
 
 2. **Cài đặt các thư viện phụ thuộc:**
    Mở terminal và chạy lệnh sau:
-
-   ```
+   `ash
    pip install pygame numpy matplotlib scipy
-   
-   ```
+   `
 
 ## 🚀 Hướng dẫn chạy chương trình
 
@@ -44,54 +41,43 @@ Mở terminal tại thư mục gốc của dự án để thực thi các task c
 ### 1. Chế độ đơn người (Tasks 1 - 5)
 
 * **Chạy Task 1 (Kiểm chứng không gian trạng thái):**
-
-  ```
+  `ash
   python task1/run_task1.py
-  
-  ```
+  `
 
-* *Chạy Task 2 (Giải Sokoban bằng UCS và A):*\*
-
-  ```
+* **Chạy Task 2 (Giải Sokoban bằng UCS và A*):**
+  `ash
   python task2/run_task2.py
-  
-  ```
+  `
 
 * **Chạy Task 3 (Thực nghiệm đo lường hiệu năng và xuất biểu đồ):**
-
-  ```
+  `ash
   python task3/benchmark.py
-  
-  ```
+  `
 
 * **Chạy Task 4 (Kiểm chứng Heuristic Admissible & Consistent):**
-
-  ```
+  `ash
   python task4/verify_heuristic.py
-  
-  ```
+  `
 
 * **Chạy Task 5 (Giao diện đồ họa đơn người):**
-
-  ```
+  `ash
+  python task5/gui_single.py
+  # Hoặc chỉ định bản đồ và thuật toán mặc định (nếu muốn):
   python task5/gui_single.py maps/example_map.txt astar
-  # Hoặc sử dụng UCS:
-  python task5/gui_single.py maps/example_map.txt ucs
-  
-  ```
+  python task5/gui_single.py maps/map_medium.txt ucs
+  `
 
 ### 2. Chế độ đối kháng 2 Agent (Tasks 6 - 8)
 
 * **Chạy Task 7 (Mô phỏng thi đấu 2 Agent qua dòng lệnh):**
-
-  ```
+  `ash
   python task7/run_task7.py
-  
-  ```
+  `
 
 * **Chạy Task 8 (Giao diện đồ họa thi đấu đối kháng trực tiếp):**
-
-  ```
-  python task8/gui_competitive.py maps/competitive_map.txt
-  
-  ```
+  `ash
+  python task8/gui_competitive.py
+  # Hoặc chỉ định bản đồ và số lượt thi đấu tối đa (nếu muốn):
+  python task8/gui_competitive.py maps/competitive_map.txt 30
+  `
