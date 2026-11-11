@@ -1,0 +1,41 @@
+{
+  "name": "Extra demo: backtracking (not assignment)",
+  "grid": [
+    [
+      {},
+      {
+        "down": 18
+      },
+      {
+        "down": 8
+      },
+      {
+        "down": 9
+      }
+    ],
+    [
+      {
+        "right": 13
+      },
+      null,
+      null,
+      null
+    ],
+    [
+      {
+        "right": 10
+      },
+      null,
+      null,
+      null
+    ],
+    [
+      {
+        "right": 14
+      },
+      null,
+      null,
+      null
+    ]
+  ]
+}

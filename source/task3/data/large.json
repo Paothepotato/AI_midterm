@@ -1,0 +1,14 @@
+{
+  "name": "Assignment page 5 (9x9)",
+  "grid": [
+    [{},{},{"down":44},{"down":16},{"down":9},{},{"down":15},{"down":44},{}],
+    [{},{"right":22},null,null,null,{"down":11,"right":3},null,null,{"down":14}],
+    [{},{"down":17,"right":28},null,null,null,null,null,null,null],
+    [{"right":14},null,null,{},{"down":12,"right":20},null,null,null,null],
+    [{"right":17},null,null,{"down":29,"right":22},null,null,null,null,{"down":7}],
+    [{},{"down":12,"right":28},null,null,null,null,{"right":12},null,null],
+    [{"right":14},null,null,null,null,{"down":7},{"down":12,"right":6},null,null],
+    [{"right":39},null,null,null,null,null,null,null,{}],
+    [{},{"right":16},null,null,{"right":8},null,null,null,{}]
+  ]
+}
